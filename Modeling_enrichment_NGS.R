@@ -111,8 +111,8 @@ idx2 = with(tt.2, {
 })
 sum(idx2)
 
-idx.comb1 = rownames(tt.1)[idx1] %in% rownames(tt.2)[idx2]
-sum(idx1) + sum(idx2) - sum(idx.comb1)
+idx.comb = unique(c(rownames(tt.1)[idx1], rownames(tt.2)[idx2]))
+head(idx.comb)
 
 ###################################
 # gene set enrichment analysis
