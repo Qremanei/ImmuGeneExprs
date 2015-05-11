@@ -85,24 +85,21 @@ mod0 = model.matrix(~ characteristics_ch1.5 + characteristics_ch1.9 + characteri
 
 # estimate the surrogate variables
 obj.sv = sva(e.mtx, mod, mod0)
+obj.sv$sv
+head(obj.sv$pprob.gam)
+obj.sv$n.sv
 
-e$condition <- e$characteristics_ch1.2
-levels(e$condition) <- c("dex24","dex4","control")
-table(e$condition)
-boxplot(exprs(e), range=0)
+# perform adjusted differential expression analysis
+modSv = cbind(mod, obj.sv$sv)
+fit = lmFit(e.mtx, modSv)
+contrast.matrix <- cbind("C1"=c(0,-1,1, rep(0, 34)),
+                         "C2"=c(-1,0,1, rep(0, 34)))
+fitContrasts = contrasts.fit(fit,contrast.matrix)
+efit <- eBayes(fitContrasts)
 
-names(fData(e))
-lvls <- c("control", "dex4")
-es <- e[,e$condition %in% lvls]
-es$condition <- factor(es$condition, levels=lvls)
-
-
-design <- model.matrix(~ es$condition)
-fit <- lmFit(es, design=design)
-fit <- eBayes(fit)
-tt <- topTable(fit, coef=2, genelist=fData(es)$GENE_SYMBOL)
+tt <- topTable(efit, adjust="BH")
 tt
-topTable(fit)[,c(6,7,18,22)]
+
 
 ###################################
 # gene set enrichment analysis
