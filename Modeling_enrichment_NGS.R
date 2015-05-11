@@ -2,7 +2,6 @@
 # May 8, 2015
 # Qinwen Liu
 
-base_dir = "~/Documents/trainings/NGS"
 setwd(base_dir)
 
 ################################
@@ -55,102 +54,25 @@ e.filtered$filter.log
 filterEset <- exprs(e.filtered$eset)
 dim(filterEset)
 
+#####################################
+# Exploratory analysis by PCA
+#####################################
+library(rgl)
+
+pca <- prcomp(t(filterEset), scale=TRUE)
+summary(pca)
 
 
-library(MLSeq)
-library(DESeq2)
+myColors <- as.numeric(sampleInfo$characteristics_ch1)
+plot3d(pca$x[, 1:3], col=myColors, xlab="PC1", ylab = "PC2", zlab =
+         "PC3", type = "s")
 
-filepath = system.file("extdata/cervical.txt", package = "MLSeq")
-cervical = read.table(filepath, header = TRUE)
-str(cervical)
-
-set.seed(9)
-
-class = data.frame(condition = factor(rep(c(0, 1), c(29, 29))))
-
-# select test set and its sample class
-nTest = ceiling(ncol(cervical) * 0.2)
-ind = sample(ncol(cervical), nTest, FALSE)
-cervical.test = cervical[, ind]
-cervical.test = as.matrix(cervical.test + 1)
-classts = data.frame(condition = class[ind, ])
-
-# select training set and its sample class
-cervical.train = cervical[, -ind]
-cervical.train = as.matrix(cervical.train + 1)
-classtr = data.frame(condition = class[-ind, ])
-
-cervical.trainS4 = DESeqDataSetFromMatrix(countData = cervical.train, 
-                                          colData = classtr, formula(~condition))
-class(cervical.trainS4)
-cervical.trainS4 = DESeq(cervical.trainS4, fitType = "local")
-
-cervical.testS4 = DESeqDataSetFromMatrix(countData = cervical.test, colData = classts,
-                                         formula(~condition))
-cervical.testS4 = DESeq(cervical.testS4, fitType = "local")
-
-# Classify using Support Vector Machines
-svm = classify(data = cervical.trainS4, method = "svm", normalize = "deseq",
-               deseqTransform = "vst", cv = 5, rpt = 3, ref = "1")
-svm
-getSlots("MLSeq")
-trained(svm)
-
-# predict the class labels
-pred.svm = predictClassify(svm, cervical.testS4)
-table(pred.svm, relevel(cervical.testS4$condition, 2))
-
-############################
-# gene set analysis
-############################
-
-library(goseq)
-library(edgeR)
-path <- system.file(package="goseq", "extdata", "Li_sum.txt")
-
-table.summary <- read.table(path, sep='\t', header=TRUE, stringsAsFactors=FALSE)
-counts <- table.summary[,-1]
-rownames(counts) <- table.summary[,1]
-grp <- factor(rep(c("Control","Treated"), times=c(4,3)))
-summarized <- DGEList(counts, lib.size=colSums(counts), group=grp)
-
-# Use a ‘common’ dispersion estimate, and compare the two groups using an exact test
-disp <- estimateCommonDisp(summarized)
-tested <- exactTest(disp)
-topTags(tested)
-
-padj <- with(tested$table, {
-  keep <- logFC != 0
-  value <- p.adjust(PValue[keep], method="BH")
-  setNames(value, rownames(tested)[keep])
-})
-genes <- padj < 0.05
-table(genes)
-
-pwf <- nullp(genes,"hg19","ensGene")
-head(pwf)
-
-# association of genes to GO pathway
-GO.wall <- goseq(pwf, "hg19", "ensGene")
-head(GO.wall)
-
-GO.nobias <- goseq(pwf,"hg19","ensGene",method="Hypergeometric")
-
-#Compare the over-represented P-values for each set, under the different methods
-idx <- match(GO.nobias$category, GO.wall$category)
-plot(log10(GO.nobias[, "over_represented_pvalue"]) ~
-       log10(GO.wall[idx, "over_represented_pvalue"]),
-     xlab="Wallenius", ylab="Hypergeometric",
-     xlim=c(-5, 0), ylim=c(-5, 0))
-abline(0, 1, col="red", lwd=2)
+# graphic device has to be open for the code to work
+# rgl.postscript("PCA.pdf", fmt="pdf", drawText=TRUE)
 
 ####################
 # limma package
 ####################
-
-library(GEOquery)
-g <- getGEO("GSE34313")
-e <- g[[1]]
 
 e$condition <- e$characteristics_ch1.2
 levels(e$condition) <- c("dex24","dex4","control")
