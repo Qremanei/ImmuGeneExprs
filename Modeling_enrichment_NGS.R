@@ -76,24 +76,24 @@ library(limma)
 library(sva)
 
 head(sampleInfo)
-# create the full model matrix containing variables of interest
-mod = model.matrix(~ characteristics_ch1 + characteristics_ch1.5 + characteristics_ch1.9 +
+# create the full model matrix containing variables of interest and adjustment variables
+mod = model.matrix(~  0 + characteristics_ch1 + characteristics_ch1.5 + characteristics_ch1.9 +
                      characteristics_ch1.10, data=sampleInfo)
 # create the null model matrix containing adjustment variable
-mod0 = model.matrix(~ characteristics_ch1.5 + characteristics_ch1.9 + characteristics_ch1.10,
+mod0 = model.matrix(~ 0 + characteristics_ch1.5 + characteristics_ch1.9 + characteristics_ch1.10 - 1,
                     data=sampleInfo)
 
 # estimate the surrogate variables
 obj.sv = sva(e.mtx, mod, mod0)
-obj.sv$sv
+head(obj.sv$sv)
 head(obj.sv$pprob.gam)
 obj.sv$n.sv
 
 # perform adjusted differential expression analysis
 modSv = cbind(mod, obj.sv$sv)
 fit = lmFit(e.mtx, modSv)
-contrast.matrix <- cbind("C1"=c(0,-1,1, rep(0, 34)),
-                         "C2"=c(-1,0,1, rep(0, 34)))
+contrast.matrix <- cbind("C1"=c(0,1,-1, rep(0, 34)),
+                         "C2"=c(1,0,-1, rep(0, 34)))
 fitContrasts = contrasts.fit(fit,contrast.matrix)
 efit <- eBayes(fitContrasts)
 
