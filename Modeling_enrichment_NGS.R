@@ -4,9 +4,9 @@
 
 setwd(base_dir)
 
-################################
-# import gene expression data
-################################
+#################################################
+# import microarray or NGS gene expression data
+#################################################
 
 library(GEOquery)
 gse.eset = getGEO("GSE53166", GSEMatrix=T)
@@ -62,7 +62,6 @@ library(rgl)
 pca <- prcomp(t(filterEset), scale=TRUE)
 summary(pca)
 
-
 myColors <- as.numeric(sampleInfo$characteristics_ch1)
 plot3d(pca$x[, 1:3], col=myColors, xlab="PC1", ylab = "PC2", zlab =
          "PC3", type = "s")
@@ -70,9 +69,22 @@ plot3d(pca$x[, 1:3], col=myColors, xlab="PC1", ylab = "PC2", zlab =
 # graphic device has to be open for the code to work
 # rgl.postscript("PCA.pdf", fmt="pdf", drawText=TRUE)
 
-####################
-# limma package
-####################
+############################################################
+# surrogate variable analysis and regression modeling
+############################################################
+library(limma)
+library(sva)
+
+head(sampleInfo)
+# create the full model matrix containing variables of interest
+mod = model.matrix(~ characteristics_ch1 + characteristics_ch1.5 + characteristics_ch1.9 +
+                     characteristics_ch1.10, data=sampleInfo)
+# create the null model matrix containing adjustment variable
+mod0 = model.matrix(~ characteristics_ch1.5 + characteristics_ch1.9 + characteristics_ch1.10,
+                    data=sampleInfo)
+
+# estimate the surrogate variables
+obj.sv = sva(e.mtx, mod, mod0)
 
 e$condition <- e$characteristics_ch1.2
 levels(e$condition) <- c("dex24","dex4","control")
@@ -84,13 +96,17 @@ lvls <- c("control", "dex4")
 es <- e[,e$condition %in% lvls]
 es$condition <- factor(es$condition, levels=lvls)
 
-library(limma)
+
 design <- model.matrix(~ es$condition)
 fit <- lmFit(es, design=design)
 fit <- eBayes(fit)
 tt <- topTable(fit, coef=2, genelist=fData(es)$GENE_SYMBOL)
 tt
 topTable(fit)[,c(6,7,18,22)]
+
+###################################
+# gene set enrichment analysis
+###################################
 
 set.seed(1)
 idx <- grep("GO:0045454", fData(es)$GO_ID)
@@ -158,6 +174,7 @@ mtx = mvrnorm(n=10000,mu=rep(0,10),Sigma=Sigma)
 var(rowMeans(mtx))
 
 
+sessionInfo()
 
 
 
