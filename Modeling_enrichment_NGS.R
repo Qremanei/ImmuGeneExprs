@@ -84,22 +84,35 @@ mod0 = model.matrix(~ 0 + characteristics_ch1.5 + characteristics_ch1.9 + charac
                     data=sampleInfo)
 
 # estimate the surrogate variables
-obj.sv = sva(e.mtx, mod, mod0)
+obj.sv = sva(filterEset, mod, mod0)
 head(obj.sv$sv)
 head(obj.sv$pprob.gam)
 obj.sv$n.sv
 
 # perform adjusted differential expression analysis
 modSv = cbind(mod, obj.sv$sv)
-fit = lmFit(e.mtx, modSv)
+fit = lmFit(filterEset, modSv)
 contrast.matrix <- cbind("C1"=c(0,1,-1, rep(0, 34)),
                          "C2"=c(1,0,-1, rep(0, 34)))
 fitContrasts = contrasts.fit(fit,contrast.matrix)
 efit <- eBayes(fitContrasts)
 
-tt <- topTable(efit, adjust="BH")
-tt
+tt.1 <- topTable(efit, coef=1, number=dim(filterEset)[1])
+idx1 = with(tt.1, {
+  logFC > 0.75 | logFC < -1.5 &
+  adj.P.Val < 0.01
+})
+sum(idx1)
 
+tt.2 <- topTable(efit, coef=2,  number=dim(filterEset)[1])
+idx2 = with(tt.2, {
+  logFC > 0.75 | logFC < -1.5 &
+  adj.P.Val < 0.01
+})
+sum(idx2)
+
+idx.comb1 = rownames(tt.1)[idx1] %in% rownames(tt.2)[idx2]
+sum(idx1) + sum(idx2) - sum(idx.comb1)
 
 ###################################
 # gene set enrichment analysis
