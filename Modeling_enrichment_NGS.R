@@ -1,13 +1,12 @@
-# Gene expression modeling and gene set enrichment analysis
+# Differential gene expression analysis: Microarray
 # May 8, 2015
 # Qinwen Liu
 
 setwd(base_dir)
 
-#################################################
-# import microarray or NGS gene expression data
-#################################################
-
+########################################
+# import microarray ExpressionSet
+########################################
 library(GEOquery)
 gse.eset = getGEO("GSE53166", GSEMatrix=T)
 e = gse.eset[[1]]
@@ -104,7 +103,7 @@ idx1 = with(tt.1, {
 })
 sum(idx1)
 
-tt.2 <- topTable(efit, coef=2,  number=dim(filterEset)[1])
+tt.2 <- topTable(efit, coef=2, number=dim(filterEset)[1])
 idx2 = with(tt.2, {
   logFC > 0.75 | logFC < -1.5 &
   adj.P.Val < 0.01
@@ -112,77 +111,21 @@ idx2 = with(tt.2, {
 sum(idx2)
 
 idx.comb = unique(c(rownames(tt.1)[idx1], rownames(tt.2)[idx2]))
-head(idx.comb)
+length(idx.comb)
 
-###################################
-# gene set enrichment analysis
-###################################
+#####################################################
+# Annotating the results with associated gene symbols
+#####################################################
+library(hugene10sttranscriptcluster.db)
+library(annotate)
 
-set.seed(1)
-idx <- grep("GO:0045454", fData(es)$GO_ID)
-length(idx)
-r1 <- roast(es, idx, design)
-?roast
-r1
+gene.symbols.1 <- getSYMBOL(rownames(tt.1)[idx1], "hugene10sttranscriptcluster.db")
+results1 <- cbind(tt.1[idx1,], gene.symbols.1)
+write.table(results1, "LPS_DE_results.txt", sep="\t", quote=FALSE)
 
-# Testing multiple gene sets
-library(org.Hs.eg.db)
-org.Hs.egGO2EG
-go2eg <- as.list(org.Hs.egGO2EG)
-head(go2eg)
-
-govector <- unlist(go2eg)
-golengths <- sapply(go2eg, length)
-head(fData(es)$GENE)
-# map entrez gene ID to row numbers of expression set
-idxvector <- match(govector, fData(es)$GENE)
-table(is.na(idxvector))
-# row index in expression set
-idx <- split(idxvector, rep(names(go2eg), golengths))
-go2eg[[1]]
-fData(es)$GENE[idx[[1]]]
-
-idxclean <- lapply(idx, function(x) x[!is.na(x)])
-idxlengths <- sapply(idxclean, length)
-idxsub <- idxclean[idxlengths >= 50]
-length(idxsub)
-
-set.seed(1)
-r2 <- mroast(es, idxsub, design)
-head(r2)
-r2 <- r2[order(-r2$PropUp),]
-head(r2)
-
-# extract the GO terms for the top results, by the mixed test
-library(GO.db)
-columns(GO.db)
-keytypes(GO.db)
-GOTERM[[rownames(r2)[1]]]
-
-select(GO.db, keys=rownames(r2)[1], columns="TERM", keytype="GOID")
-
-r2tab <- select(GO.db, keys=rownames(r2)[1:10],
-                columns=c("GOID","TERM","DEFINITION"), 
-                keytype="GOID")
-r2tab[,1:2]
-
-r2 <- r2[order(r2$PValue),]
-r2tab <- select(GO.db, keys=rownames(r2)[r2$Direction == "Up"][1:10],
-                columns=c("GOID","TERM","DEFINITION"), 
-                keytype="GOID")
-r2tab[,1:2]
-
-r2tab <- select(GO.db, keys=rownames(r2)[r2$Direction == "Down"][1:5],
-                columns=c("GOID","TERM","DEFINITION"), 
-                keytype="GOID")
-r2tab[,1:2]
-
-library(MASS)
-Sigma = matrix(.7, ncol=10, nrow=10)
-diag(Sigma) = 1
-mtx = mvrnorm(n=10000,mu=rep(0,10),Sigma=Sigma)
-var(rowMeans(mtx))
-
+gene.symbols.2 <- getSYMBOL(rownames(tt.2)[idx2], "hugene10sttranscriptcluster.db")
+results2 <- cbind(tt.2[idx2,], gene.symbols.2)
+write.table(results2, "dNS1_DE_results.txt", sep="\t", quote=FALSE)
 
 sessionInfo()
 
