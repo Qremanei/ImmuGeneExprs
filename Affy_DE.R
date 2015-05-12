@@ -131,15 +131,21 @@ write.table(results2, "dNS1_DE_results.txt", sep="\t", quote=FALSE)
 # gene set enrichment analysis
 ###################################
 array.db = hugene10sttranscriptcluster.db
-gene.go = select(array.db, keys=featureInfo$ID, keytypes="PROBEID", columns="GO")
+columns(array.db)
+gene.go = select(array.db, keys=rownames(filterEset), keytypes="PROBEID",
+                 columns=c("GO", "SYMBOL"))
+head(gene.go)
 
 # enrichment of immune response genes
 set.seed(1)
-idx <- grep("GO:0006955", fData(e)$GO_ID)
-length(idx)
-r1 <- roast(es, idx, design)
-?roast
+go.idx <- grep("GO:0006955", gene.go$GO)
+length(go.idx)
+ind = unique(gene.go[go.idx, "PROBEID"])
+r1 <- roast(filterEset, ind, design=modSv, contrast=contrast.matrix[,1])
 r1
+r2 <- roast(filterEset, ind, design=modSv, contrast=contrast.matrix[,2])
+r2
+
 
 # Testing multiple gene sets
 library(org.Hs.eg.db)
