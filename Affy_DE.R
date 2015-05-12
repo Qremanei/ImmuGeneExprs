@@ -135,6 +135,7 @@ columns(array.db)
 gene.go = select(array.db, keys=rownames(filterEset), keytypes="PROBEID",
                  columns=c("GO", "SYMBOL"))
 head(gene.go)
+# length(unique(gene.go$GO))
 
 # enrichment of immune response genes
 set.seed(1)
@@ -145,35 +146,49 @@ r1 <- roast(filterEset, ind, design=modSv, contrast=contrast.matrix[,1])
 r1
 r2 <- roast(filterEset, ind, design=modSv, contrast=contrast.matrix[,2])
 r2
-
+# pick a contrast in random as a control
+cont.r = c(rep(0, 3), 1, -1, rep(0, 32))
+roast(filterEset, ind, design=modSv, contrast=cont.r)
 
 # Testing multiple gene sets
-library(org.Hs.eg.db)
-org.Hs.egGO2EG
-go2eg <- as.list(org.Hs.egGO2EG)
-head(go2eg)
+# library(org.Hs.eg.db)
+# org.Hs.egGO2EG
+# go2eg <- as.list(org.Hs.egGO2EG)
+# head(go2eg)
+# 
+# govector <- unlist(go2eg)
+# golengths <- sapply(go2eg, length)
+# head(fData(filterEset)$GENE)
+# # map entrez gene ID to row numbers of expression set
+# idxvector <- match(govector, fData(es)$GENE)
+# table(is.na(idxvector))
+# # row index in expression set
+# idx <- split(idxvector, rep(names(go2eg), golengths))
+# go2eg[[1]]
+# fData(es)$GENE[idx[[1]]]
+# 
+# idxclean <- lapply(idx, function(x) x[!is.na(x)])
+# idxlengths <- sapply(idxclean, length)
+# idxsub <- idxclean[idxlengths >= 50]
+# length(idxsub)
 
-govector <- unlist(go2eg)
-golengths <- sapply(go2eg, length)
-head(fData(es)$GENE)
-# map entrez gene ID to row numbers of expression set
-idxvector <- match(govector, fData(es)$GENE)
-table(is.na(idxvector))
-# row index in expression set
-idx <- split(idxvector, rep(names(go2eg), golengths))
-go2eg[[1]]
-fData(es)$GENE[idx[[1]]]
-
-idxclean <- lapply(idx, function(x) x[!is.na(x)])
-idxlengths <- sapply(idxclean, length)
-idxsub <- idxclean[idxlengths >= 50]
-length(idxsub)
+go.group = split(gene.go, gene.go$GO)
+head(go.group)
+length(go.group)
+ind.m = lapply(go.group, function(group) unique(group$PROBEID))
+head(ind.m)
+length(ind.m)
+ind.length = sapply(ind.m, length)
+head(ind.length)
+ind.go.group = ind.m[ind.length >= 50]
+head(ind.go.group)
+length(ind.go.group)
 
 set.seed(1)
-r2 <- mroast(es, idxsub, design)
-head(r2)
-r2 <- r2[order(-r2$PropUp),]
-head(r2)
+mr1 <- mroast(filterEset, ind.go.group, design=modSv,  contrast=contrast.matrix[,1])
+head(mr1)
+mr1 <- mr1[order(-mr1$PropUp),]
+head(mr1)
 
 # extract the GO terms for the top results, by the mixed test
 library(GO.db)
