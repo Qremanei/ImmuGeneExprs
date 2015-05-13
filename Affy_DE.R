@@ -151,27 +151,6 @@ cont.r = c(rep(0, 3), 1, -1, rep(0, 32))
 roast(filterEset, ind, design=modSv, contrast=cont.r)
 
 # Testing multiple gene sets
-# library(org.Hs.eg.db)
-# org.Hs.egGO2EG
-# go2eg <- as.list(org.Hs.egGO2EG)
-# head(go2eg)
-# 
-# govector <- unlist(go2eg)
-# golengths <- sapply(go2eg, length)
-# head(fData(filterEset)$GENE)
-# # map entrez gene ID to row numbers of expression set
-# idxvector <- match(govector, fData(es)$GENE)
-# table(is.na(idxvector))
-# # row index in expression set
-# idx <- split(idxvector, rep(names(go2eg), golengths))
-# go2eg[[1]]
-# fData(es)$GENE[idx[[1]]]
-# 
-# idxclean <- lapply(idx, function(x) x[!is.na(x)])
-# idxlengths <- sapply(idxclean, length)
-# idxsub <- idxclean[idxlengths >= 50]
-# length(idxsub)
-
 go.group = split(gene.go, gene.go$GO)
 head(go.group)
 length(go.group)
