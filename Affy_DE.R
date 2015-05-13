@@ -1,4 +1,4 @@
-# Differential gene expression analysis: Microarray
+# Differential gene expression and gene set enrichment analysis: Microarray
 # May 8, 2015
 # Qinwen Liu
 
