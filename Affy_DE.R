@@ -193,7 +193,7 @@ r2tab <- select(GO.db, keys=rownames(r2)[r2$Direction == "Down"][1:5],
                 keytype="GOID")
 r2tab[,1:2]
 
-
+#####################
 sessionInfo()
 
 
