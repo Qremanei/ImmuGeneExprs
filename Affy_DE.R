@@ -169,29 +169,36 @@ head(mr1)
 mr1 <- mr1[order(-mr1$PropUp),]
 head(mr1)
 
+mr2 <- mroast(filterEset, ind.go.group, design=modSv,  contrast=contrast.matrix[,2])
+head(mr2)
+mr2 <- mr2[order(-mr2$PropUp),]
+head(mr2)
+
 # extract the GO terms for the top results, by the mixed test
 library(GO.db)
 columns(GO.db)
 keytypes(GO.db)
-GOTERM[[rownames(r2)[1]]]
+GOTERM[[rownames(mr1)[1]]]
 
-select(GO.db, keys=rownames(r2)[1], columns="TERM", keytype="GOID")
-
-r2tab <- select(GO.db, keys=rownames(r2)[1:10],
+mr1tab <- select(GO.db, keys=rownames(mr1)[1:20],
                 columns=c("GOID","TERM","DEFINITION"), 
                 keytype="GOID")
-r2tab[,1:2]
+mr1tab[,1:2]
 
-r2 <- r2[order(r2$PValue),]
-r2tab <- select(GO.db, keys=rownames(r2)[r2$Direction == "Up"][1:10],
+mr2tab <- select(GO.db, keys=rownames(mr2)[1:20],
+                 columns=c("GOID","TERM","DEFINITION"), 
+                 keytype="GOID")
+mr2tab[,1:2]
+
+mr1tab.up <- select(GO.db, keys=rownames(mr1)[mr1$Direction == "Up"][1:20],
                 columns=c("GOID","TERM","DEFINITION"), 
                 keytype="GOID")
-r2tab[,1:2]
+mr1tab.up[,1:2]
 
-r2tab <- select(GO.db, keys=rownames(r2)[r2$Direction == "Down"][1:5],
+mr1tab.down <- select(GO.db, keys=rownames(mr1)[mr1$Direction == "Down"][1:20],
                 columns=c("GOID","TERM","DEFINITION"), 
                 keytype="GOID")
-r2tab[,1:2]
+mr1tab.down[,1:2]
 
 #####################
 sessionInfo()
