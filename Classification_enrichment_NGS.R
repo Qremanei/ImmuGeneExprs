@@ -43,7 +43,7 @@ sapply(sample_col[2:11], function(n) {
 dev.off()
 
 ###############################################################
-# filter data: remove genes with little cross-sample variation
+# filter data: remove genes with low cross-sample variation
 ###############################################################
 library(genefilter)
 e.var = rowVars(e.mtx)

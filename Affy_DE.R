@@ -41,7 +41,7 @@ sapply(sample_col[2:11], function(n) {
 dev.off()
 
 ###############################################################
-# filter data: remove genes with little cross-sample variation
+# filter data: remove genes with low cross-sample variation
 ###############################################################
 library(genefilter)
 e.var = rowVars(e.mtx)
@@ -75,11 +75,12 @@ library(limma)
 library(sva)
 
 head(sampleInfo)
+colnames(sampleInfo)
 # create the full model matrix containing variables of interest and adjustment variables
 mod = model.matrix(~  0 + characteristics_ch1 + characteristics_ch1.5 + characteristics_ch1.9 +
                      characteristics_ch1.10, data=sampleInfo)
 # create the null model matrix containing adjustment variable
-mod0 = model.matrix(~ 0 + characteristics_ch1.5 + characteristics_ch1.9 + characteristics_ch1.10 - 1,
+mod0 = model.matrix(~ 0 + characteristics_ch1.5 + characteristics_ch1.9 + characteristics_ch1.10,
                     data=sampleInfo)
 
 # estimate the surrogate variables
